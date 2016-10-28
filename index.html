@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Car model by Graeme Bryant</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+		    body {
+			color: #fff;
+			font-family:Monospace;
+			font-size:13px;
+			text-align:center;
+			font-weight: bold;
+
+			background-color: #000;
+			margin: 0px;
+			overflow: hidden;
+		    }
+			
+			#info {
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+				z-index: 100;
+			}
+			a {
+
+				color: #0080ff;
+			}
+
+		</style>
+	</head>
+	<body>
+
+		<div id="info">Car model by Graeme Bryant, for <a href="http://www.hacktivate.me/events/" target="_blank">Hacktivate Heist</a>
+		<br/>Click to cycle particles/wireframe/normals
+		<br/>Code by Nick Young
+		</div>
+	
+		<div id="container"></div>
+
+		<script src="js/jquery-1.9.1.min.js"></script>
+
+		<script src="js/three.min.js"></script>
+		<script src="js/Detector.js"></script>
+
+		<script>
+
+			$(document).ready(function () {
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var SCREEN_HEIGHT = window.innerHeight;
+			var SCREEN_WIDTH = window.innerWidth;
+
+			var container;
+
+			var camera, scene, renderer, mesh;
+
+			var car,ps,wf;
+
+			var grid;
+
+			var loader;
+
+			var scale=10;
+
+			init();
+			animate();
+
+			function init() {
+
+				container = $('#container');
+				minimap = $('#minimap');
+				
+				scene = new THREE.Scene();
+				scene.fog = new THREE.FogExp2( 0x000104, 0.0000675 );
+				scene.position.set(500*scale,200*scale,0);
+
+				renderer = new THREE.WebGLRenderer( { clearColor: 0x000000, clearAlpha: 1, antialias: false } );
+				renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+				renderer.autoClear = false;
+				renderer.sortObjects = false;
+				renderer.setClearColor( scene.fog.color, 1 );
+				container.append( renderer.domElement );
+
+				camera = new THREE.PerspectiveCamera( 90, SCREEN_WIDTH / SCREEN_HEIGHT, 1, 1000*scale );
+				camera.position.set( 500*scale, 100*scale, 50*scale );
+				camera.lookAt( scene.position );
+
+				loader = new THREE.JSONLoader(true);
+				document.body.appendChild( loader.statusDomElement );
+
+				loader.load( "obj/carascii.js", function( geometry ) { 
+					
+					ps = new THREE.ParticleSystem( geometry.clone(), new THREE.ParticleBasicMaterial( { size: 3, color: 0x00ff00 } ) );
+					ps.scale=new THREE.Vector3( 40, 40, 40 );
+					ps.position.set(500*scale,200*scale,150);
+					ps.rotation.x=Math.PI/2;
+					
+					car = new THREE.Mesh( geometry, new THREE.MeshNormalMaterial({side:THREE.DoubleSide,shading: THREE.SmoothShading}) );
+					car.scale=new THREE.Vector3( 40, 40, 40 );
+					car.position.set(500*scale,200*scale,150);
+					car.rotation.x=Math.PI/2;
+					car.visible=false;
+					
+					wf = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial({wireframe:true}) );
+					wf.scale=new THREE.Vector3( 40, 40, 40 );
+					wf.position.set(500*scale,200*scale,150);
+					wf.rotation.x=Math.PI/2;
+					wf.visible=false;
+
+					scene.add(car);
+					scene.add(ps);
+					scene.add(wf);
+
+					});
+
+				
+				loader.statusDomElement.style.display = "none";
+
+				grid = new THREE.ParticleSystem( new THREE.PlaneGeometry( 1000*scale, 1000*scale, 100, 100 ), new THREE.ParticleBasicMaterial( { color: 0xff0000, size: 1*scale } ) );
+				
+				grid.position.set(500*scale,500*scale,0);
+				scene.add( grid );
+
+				window.addEventListener( 'resize', onWindowResize, false );
+			}
+
+
+			function onWindowResize( event ) {
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				camera.lookAt( scene.position );
+
+			}
+
+			//
+			
+			$("#container").click(function() {
+					if (ps.visible) {
+						ps.visible=false;
+						wf.visible=true;
+					} else if (wf.visible) {
+						wf.visible=false;
+						car.visible=true;
+					} else if (car.visible) {
+						car.visible=false;
+						ps.visible=true;
+					}
+			});
+
+			
+			function animate () {
+
+				requestAnimationFrame( animate );
+				if (car) {
+					wf.rotation.y+=.01;
+					ps.rotation.y+=.01;
+					car.rotation.y+=.01;
+				}
+				
+				
+				render();
+
+			}
+
+			function render () {
+
+				renderer.setViewport(0,0,window.innerWidth,window.innerHeight);
+				renderer.clear();
+				renderer.render(scene,camera);
+			}
+			});
+		</script>
+
+	</body>
+
+</html>
